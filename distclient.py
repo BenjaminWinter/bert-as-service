@@ -75,5 +75,5 @@ encoded = Parallel(n_jobs=20)(delayed(encode)(chunk) for chunk in tqdm(list(chun
 encoded = [item for sublist in encoded for item in sublist]
 print("Saved items: " + str(len(encoded)))
 encoded = { k: v for d in encoded for k, v in d.items() }
-json.dump(encoded, open("ptoid.json", encoding="utf-8", mode="w"))
+json.dump(encoded, open(sys.argv[2] + "toid.json", encoding="utf-8", mode="w"))
     
