@@ -17,7 +17,7 @@ def chunks(l, n):
     for i in range(0, len(l), n):
         # Create an index range for l of n items:
         yield l[i:i+n]
-        
+
 def encode(examples):
     tokenizer = FullTokenizer('../pytorch-pretrained-BERT/uncased/vocab.txt')
     bc = BertClient(ip='localhost', port=int(sys.argv[1]))
@@ -45,22 +45,31 @@ def encode(examples):
         res.append({batch_keys[j]: uid})
         np.save((sys.argv[2] + '/' + uid + ".npy").encode('utf-8').decode('utf-8'), np.array(clipped).astype('float32'))
     return res
-     
+
 encoded = {}
 data = {}
 
 dtrain = json.load(open("../hotpot/hotpot_train_v1.json", encoding="utf-8"))
 ddev = json.load(open("../hotpot/hotpot_dev_distractor_v1.json", encoding="utf-8"))
+sptrain = json.load(open("../pytorch-pretrained-BERT/hotpot/hp_train.squad"))
+spdev = json.load(open("../pytorch-pretrained-BERT/hotpot/hp_dev.squad"))
 if sys.argv[2] == 'questions':
     for ds in [dtrain, ddev]:
         for dp in ds:
             data[dp['_id']] = dp['question']
-else:
+elif sys.argv[2] == 'paragraphs':
     for ds in [dtrain, ddev]:
         for dp in ds:
             for p in dp['context']:
              data[p[0]] = "<t> " + p[0] + " <t> " + ' '.join(p[1])
+elif sys.argv[2] == 'supporting_facts':
+    for ds in [sptrain, spdev]:
+        for dp in ds['data']:
+            data[dp['paragraphs'][0]['qas'][0]['id']] = dp['paragraphs'][0]['context']
 
+else:
+    print("dont know that data type")
+    exit()
 dlist = [{k:data[k]} for k in sorted(data)]
 #dlist = dlist[:20000]
 #dlist = list(chunks(dlist, len(dlist)//10))[int(sys.argv[4])]
@@ -76,4 +85,3 @@ encoded = [item for sublist in encoded for item in sublist]
 print("Saved items: " + str(len(encoded)))
 encoded = { k: v for d in encoded for k, v in d.items() }
 json.dump(encoded, open(sys.argv[2] + "toid.json", encoding="utf-8", mode="w"))
-    
